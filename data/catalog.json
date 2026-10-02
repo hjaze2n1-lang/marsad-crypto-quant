@@ -1,4 +1,10 @@
 {
   "version": 1,
-  "datasets": []
+  "datasets": [
+    {
+      "symbol": "BTCUSDT",
+      "timeframe": "1d",
+      "file": "BTCUSDT/1d.csv"
+    }
+  ]
 }
