@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b1018">
+  <meta name="description" content="محلل فني كمي محلي للعملات الرقمية — بياناتك تبقى على جهازك.">
+  <title>مرصد | محلل السوق</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="#overview" aria-label="مرصد — الرئيسية"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span><span><b>مَرْصَد</b><small>CRYPTO QUANT DESK</small></span></a>
+      <div class="topbar-center"><span class="local-indicator"><i></i> تحليل محلي · بلا API</span><span class="utc-clock" id="clock">—</span></div>
+      <div class="topbar-actions"><button class="button button-quiet" id="demoBtn" type="button">تجربة عينة</button><button class="button button-primary" id="importTopBtn" type="button"><span aria-hidden="true">＋</span> استيراد بيانات</button><input id="fileInput" type="file" accept=".csv,.json,.txt" multiple hidden></div>
+    </header>
+
+    <div class="workspace">
+      <aside class="sidebar" aria-label="التنقل الرئيسي">
+        <div class="side-label">المساحة</div>
+        <nav class="nav-list" id="mainNav">
+          <button class="nav-item active" data-view="overview"><span class="nav-icon">⌁</span><span>نظرة عامة</span></button>
+          <button class="nav-item" data-view="structure"><span class="nav-icon">⌖</span><span>بنية السعر</span></button>
+          <button class="nav-item" data-view="volume"><span class="nav-icon">▥</span><span>الحجم السنوي</span></button>
+          <button class="nav-item" data-view="cycles"><span class="nav-icon">◷</span><span>دورات البيتكوين</span></button>
+          <button class="nav-item" data-view="data"><span class="nav-icon">▤</span><span>البيانات</span></button>
+        </nav>
+        <div class="sidebar-spacer"></div>
+        <div class="privacy-card"><span class="privacy-dot"></span><div><b>بياناتك لك</b><small>تُحفظ محليًا في هذا المتصفح</small></div></div>
+        <a class="side-help" href="#guide">دليل الاستخدام <span>↗</span></a>
+      </aside>
+
+      <main class="main-content">
+        <section class="view-panel active" id="view-overview">
+          <div class="page-heading"><div><div class="eyebrow">مرصد الأسواق الرقمية <span class="live-dot"></span></div><h1>لوحة التحليل</h1><p>قراءة آلية لبنية السعر — دون توصيات أو إشارات تداول.</p></div><div class="data-status" id="dataStatus"><span class="status-icon">◌</span><span>لا توجد بيانات محمّلة</span></div></div>
+          <section class="market-toolbar" aria-label="إعدادات الرسم">
+            <div class="selector-group"><label for="symbolSelect">الأصل</label><select id="symbolSelect" disabled><option>—</option></select></div>
+            <div class="selector-group"><label for="timeframeSelect">الإطار الزمني</label><select id="timeframeSelect" disabled><option>—</option></select></div>
+            <div class="toolbar-divider"></div>
+            <div class="range-controls"><span class="control-caption">شمعة في العرض</span><div class="segmented" id="rangeButtons"><button data-count="120">120</button><button data-count="240" class="selected">240</button><button data-count="480">480</button></div></div>
+            <div class="toolbar-spacer"></div>
+            <div class="chart-paging"><button id="olderBtn" type="button" disabled aria-label="بيانات أقدم">← أقدم</button><button id="latestBtn" type="button" disabled>الأحدث →</button></div>
+          </section>
+
+          <section class="stat-grid" aria-label="ملخص التحليل">
+            <article class="stat-card"><div class="stat-title">اتجاه السوق <span class="info-dot" title="مقارنة EMA 20 وEMA 50 وميل EMA 20">i</span></div><div class="stat-value" id="trendValue">—</div><div class="stat-note" id="trendNote">بانتظار البيانات</div></article>
+            <article class="stat-card"><div class="stat-title">RSI (14) <span class="info-dot" title="مؤشر القوة النسبية بطريقة Wilder">i</span></div><div class="stat-value" id="rsiValue">—</div><div class="meter"><span id="rsiMeter"></span></div><div class="stat-note" id="rsiNote">فوق 70 تشبع شرائي · دون 30 تشبع بيعي</div></article>
+            <article class="stat-card"><div class="stat-title">قمم/قيعان مؤكدة <span class="info-dot" title="Pivot بعد تأكيد 5 شموع على اليمين واليسار">i</span></div><div class="stat-value" id="swingValue">—</div><div class="stat-note" id="swingNote">تأكيد متأخر بطبيعته</div></article>
+            <article class="stat-card"><div class="stat-title">مناطق غير مكتملة</div><div class="stat-value" id="zonesValue">—</div><div class="stat-note" id="zonesNote">FVG وكتل أوامر حسب قواعد التطبيق</div></article>
+          </section>
+
+          <section class="chart-card">
+            <div class="chart-header"><div class="chart-title"><div><h2 id="chartTitle">مخطط الشموع</h2><p id="chartSubtitle">استورد OHLCV لعرض الشارت والتحليل</p></div><span class="chart-time" id="lastCandleTime">—</span></div><div class="chart-legend" id="chartLegend"><span><i class="legend-up"></i> صعود</span><span><i class="legend-down"></i> هبوط</span><span><i class="legend-ema20"></i> EMA 20</span><span><i class="legend-ema50"></i> EMA 50</span><span><i class="legend-fvg"></i> فجوة قيمة عادلة</span><span><i class="legend-ob"></i> Order Block</span><span><i class="legend-swing"></i> قمة/قاع</span><span><i class="legend-annual"></i> أعلى حجم سنوي</span></div></div>
+            <div class="chart-wrap" id="chartWrap"><canvas id="priceChart" aria-label="مخطط شموع تفاعلي للسعر والحجم"></canvas><div class="chart-empty" id="chartEmpty"><div class="empty-glyph">⌁</div><b>المخطط جاهز لبياناتك</b><span>اختر ملف CSV أو JSON من جهازك لبدء التحليل.</span><button class="button button-primary" id="emptyImportBtn" type="button">اختيار ملف</button></div></div>
+            <div class="chart-footer"><div class="chart-foot-note"><span class="privacy-dot"></span> لا يغادر الملف جهازك</div><div id="chartCount">0 شمعة</div></div>
+          </section>
+
+          <section class="insight-card" id="insightCard"><div class="insight-heading"><div><div class="eyebrow">ملاحظات آلية</div><h2 id="insightTitle">ملخص البنية</h2></div><span class="method-chip">قواعد معلنة · لا تنبؤ</span></div><div class="insight-body" id="insightBody"><p class="muted">ستظهر هنا قراءة المؤشرات ومناطق السعر عند استيراد بياناتك.</p></div></section>
+        </section>
+
+        <section class="view-panel" id="view-structure">
+          <div class="page-heading"><div><div class="eyebrow">السلوك السعري</div><h1>بنية السعر</h1><p>قمم وقيعان محورية، فجوات قيمة عادلة، ومناطق Order Block.</p></div></div>
+          <div class="section-callout"><b>كيف نعرّفها هنا؟</b><span>هذه قواعد آلية قابلة للفحص وليست تعريفًا موحدًا في السوق. فجوة FVG تُكتشف من ثلاث شمعات؛ والـ Order Block آخر شمعة معاكسة قبل حركة إزاحة تكسر قمة/قاعًا محوريًا.</span></div>
+          <div class="structure-grid"><article class="panel-card"><div class="panel-head"><h2>آخر القمم والقيعان</h2><span class="method-chip">Pivot 5 / 5</span></div><div id="swingsTable" class="table-wrap"><div class="empty-inline">استورد بيانات لعرض النقاط المحورية.</div></div></article><article class="panel-card"><div class="panel-head"><h2>مناطق السعر المفتوحة</h2><span class="method-chip">FVG + OB</span></div><div id="zonesTable" class="table-wrap"><div class="empty-inline">لا توجد مناطق معروضة بعد.</div></div></article></div>
+        </section>
+
+        <section class="view-panel" id="view-volume">
+          <div class="page-heading"><div><div class="eyebrow">توزيع النشاط</div><h1>الحجم السنوي</h1><p>أعلى شمعة حجمًا في كل سنة، مع حركة السعر اللاحقة في العينة المتاحة.</p></div></div>
+          <div class="section-callout"><b>تنبيه القياس</b><span>يُستخدم عمود Volume كما هو وارد في ملفك (قد يكون حجم أصل أساسي لا قيمة بالدولار). التفاعل يقيس تغير الإغلاق بعد 20 شمعة متاحة، وليس علاقة سببية.</span></div>
+          <article class="panel-card"><div class="panel-head"><h2>قمم الحجم لكل سنة</h2><span class="method-chip">أعلى شمعة منفردة</span></div><div id="annualTable" class="table-wrap"><div class="empty-inline">استورد بيانات OHLCV لاحتساب النشاط السنوي.</div></div></article>
+        </section>
+
+        <section class="view-panel" id="view-cycles">
+          <div class="page-heading"><div><div class="eyebrow">إصدار Bitcoin</div><h1>دورات التنصيف</h1><p>مواعيد تاريخية حسب ارتفاع الكتلة، والموعد المستقبلي يبقى تقديريًا.</p></div></div>
+          <div class="section-callout"><b>الدقة الممكنة</b><span>يُحدَّد التنصيف عند ارتفاع كتلة محدد، لا في يوم تقويمي ثابت. لذلك التواريخ الماضية حقائق تاريخية، أما التالي فنافذة تقديرية حول 2028 ولا يمكن تثبيت يومها مسبقًا.</span></div>
+          <article class="panel-card"><div class="panel-head"><h2>جدول أحداث التنصيف</h2><span class="method-chip">كل 210,000 كتلة</span></div><div class="table-wrap"><table><thead><tr><th>الحدث</th><th>التاريخ</th><th>الكتلة</th><th>المكافأة بعده</th><th>الحالة</th></tr></thead><tbody id="halvingRows"></tbody></table></div><p class="table-footnote">الموعد القادم تقديري إلى أن تُنتَج الكتلة رقم 1,050,000. <a href="https://www.bitcoin.org/en/halving" target="_blank" rel="noreferrer">المصدر: Bitcoin.org</a></p></article>
+        </section>
+
+        <section class="view-panel" id="view-data">
+          <div class="page-heading"><div><div class="eyebrow">مخزن محلي</div><h1>البيانات</h1><p>استيراد ملفاتك وإدارة مجموعات OHLCV داخل هذا المتصفح.</p></div><button class="button button-primary" id="dataImportBtn" type="button">＋ استيراد ملفات</button></div>
+          <div class="import-grid"><article class="panel-card import-card"><div class="panel-head"><h2>إضافة بيانات</h2><span class="privacy-chip">محلي فقط</span></div><p>يدعم CSV وJSON. يقبل ملفات تحتوي أعمدة الوقت، Open، High، Low، Close، Volume؛ كما يدعم صفوف Binance ذات الأعمدة القياسية.</p><div class="field-row"><label>العملة / الزوج<input id="importSymbol" type="text" value="BTCUSDT" placeholder="BTCUSDT"></label><label>الفريم<input id="importTimeframe" type="text" value="1d" placeholder="1h أو 4h أو 1d"></label></div><label class="file-drop" for="fileInput"><span class="file-icon">⇧</span><b>اختر ملف CSV أو JSON</b><small>يمكنك استيراد أكثر من ملف؛ كل ملف يُخزّن كزوج/فريم مستقل.</small></label><div class="progress-row" id="importProgress" hidden><span id="progressText">جارٍ الاستيراد…</span><progress id="progressBar" max="100" value="0"></progress></div></article><article class="panel-card"><div class="panel-head"><h2>المجموعات المحفوظة</h2><button class="text-button" id="clearDataBtn" type="button">مسح كل البيانات</button></div><div id="datasetList" class="dataset-list"><div class="empty-inline">لا توجد مجموعات محفوظة.</div></div></article></div>
+          <article class="panel-card guide-card" id="guide"><div class="panel-head"><h2>تنسيق الملف</h2><span class="method-chip">CSV / JSON</span></div><div class="guide-columns"><div><b>أسماء الأعمدة المدعومة</b><code>timestamp, open, high, low, close, volume</code><small>الوقت يقبل ISO-8601 أو Unix بالثواني/الميلي ثانية. الحقول symbol وtimeframe اختيارية.</small></div><div><b>JSON</b><code>[{ "timestamp": "2024-01-01", "open": 42000, "high": 43000, "low": 41000, "close": 42500, "volume": 1234 }]</code><small>أو كائن يحوي المفتاح candles. تُعرض الشموع بحسب ترتيب الملف؛ رتّبها زمنيًا من الأقدم إلى الأحدث قبل الاستيراد.</small></div></div></article>
+        </section>
+        <footer class="app-footer"><span>مرصد · أداة قراءة للبيانات التاريخية فقط</span><span>ليس نصيحة مالية · تحقّق من بيانات المصدر</span></footer>
+      </main>
+    </div>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  </div>
+  <script type="module" src="./src/app.js"></script>
+</body>
+</html>
