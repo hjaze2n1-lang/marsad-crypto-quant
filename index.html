@@ -68,6 +68,7 @@
           <section class="chart-controls" aria-label="إعدادات الشارت">
             <div class="selector-group"><label for="symbolSelect">الأصل</label><select id="symbolSelect" disabled><option>—</option></select></div>
             <div class="selector-group"><label for="timeframeSelect">الإطار الزمني</label><select id="timeframeSelect" disabled><option>—</option></select></div>
+            <div class="selector-group"><label for="chartTypeSelect">نوع الرسم</label><select id="chartTypeSelect"><option value="candles">شموع يابانية</option><option value="line">خط الإغلاق</option></select></div>
             <div class="chart-range-tools">
               <button class="chart-tool-button fit-button" id="fitAllBtn" type="button" disabled>كل الشموع</button>
               <button class="chart-tool-button" id="zoomOutBtn" type="button" aria-label="تصغير" disabled>−</button>
@@ -75,6 +76,13 @@
               <button class="chart-tool-button" id="zoomInBtn" type="button" aria-label="تكبير" disabled>＋</button>
             </div>
             <div class="chart-pan-tools"><button class="chart-tool-button" id="olderBtn" type="button" disabled>← أقدم</button><button class="chart-tool-button" id="latestBtn" type="button" disabled>الأحدث →</button></div>
+            <div class="chart-layer-tools" aria-label="طبقات التحليل">
+              <label><input id="showEma20" type="checkbox" checked><span>EMA 20</span></label>
+              <label><input id="showEma50" type="checkbox" checked><span>EMA 50</span></label>
+              <label><input id="showFvg" type="checkbox" checked><span>FVG</span></label>
+              <label><input id="showOb" type="checkbox" checked><span>Order Block</span></label>
+              <label><input id="showMarkers" type="checkbox" checked><span>القمم والحجم</span></label>
+            </div>
           </section>
           <section class="chart-card chart-page-card">
             <div class="chart-header">
@@ -82,12 +90,13 @@
               <div class="chart-legend"><span><i class="legend-up"></i> صعود</span><span><i class="legend-down"></i> هبوط</span><span><i class="legend-ema20"></i> EMA 20</span><span><i class="legend-ema50"></i> EMA 50</span><span><i class="legend-fvg"></i> FVG مفتوحة</span><span><i class="legend-ob"></i> Order Block</span><span><i class="legend-swing"></i> قمة/قاع</span><span><i class="legend-annual"></i> أعلى حجم سنوي</span></div>
             </div>
             <div class="chart-wrap chart-wrap-full" id="chartWrap">
-              <canvas id="priceChart" aria-label="شارت شموع OHLCV تفاعلي للسعر والحجم"></canvas>
+              <div id="priceChart" role="img" aria-label="شارت TradingView تفاعلي لشموع OHLCV والحجم"></div>
               <div class="chart-empty visible" id="chartEmpty"><div class="empty-glyph">⌁</div><b>الشارت ينتظر ملفًا مسجلًا</b><span>أضف CSV إلى مجلد data في المستودع ثم سجّله في data/catalog.json.</span><button class="button button-quiet" data-open-view="files" type="button">عرض طريقة التجهيز</button></div>
             </div>
             <div class="chart-footer"><div class="chart-foot-note"><span class="privacy-dot"></span><span id="ohlcvReadout">حرّك المؤشر فوق شمعة لقراءة OHLCV</span></div><div id="chartCount">0 شمعة</div></div>
           </section>
-          <div class="chart-hint">اختصارات لوحة المفاتيح: <kbd>+</kbd> تكبير · <kbd>−</kbd> تصغير · <kbd>Home</kbd> عرض كامل السجل · الأسهم للتحريك</div>
+          <div class="chart-attribution">TradingView Lightweight Charts™ Copyright (с) 2025 TradingView, Inc. <a href="https://www.tradingview.com/" target="_blank" rel="noreferrer">TradingView</a></div>
+          <div class="chart-hint">اسحب الشارت للتحريك · قرّب بإصبعين على الهاتف أو بعجلة الفأرة · اختصارات: <kbd>+</kbd>/<kbd>−</kbd> تكبير/تصغير · <kbd>Home</kbd> كامل السجل · الأسهم للتحريك</div>
         </section>
 
         <section class="view-panel" id="view-structure">
@@ -138,6 +147,7 @@
     </div>
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
   </div>
+  <script src="./vendor/lightweight-charts.standalone.production.js"></script>
   <script type="module" src="./src/app.js"></script>
 </body>
 </html>

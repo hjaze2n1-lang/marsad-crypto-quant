@@ -1,5 +1,5 @@
 import { analyze, annualVolumePeaks } from './analysis.js';
-import { drawChart, setHover } from './chart.js';
+import { createTradingViewChart } from './chart.js';
 import { loadCatalog, loadCsvDataset } from './store.js';
 
 const $ = selector => document.querySelector(selector);
@@ -12,14 +12,15 @@ const HALVINGS = [
 ];
 const els = {
   source: $('#sourceStatus'), status: $('#dataStatus'), chartStatus: $('#chartStatus'),
-  symbol: $('#symbolSelect'), timeframe: $('#timeframeSelect'), canvas: $('#priceChart'), empty: $('#chartEmpty'),
+  symbol: $('#symbolSelect'), timeframe: $('#timeframeSelect'), chart: $('#priceChart'), chartType: $('#chartTypeSelect'), empty: $('#chartEmpty'),
+  showEma20: $('#showEma20'), showEma50: $('#showEma50'), showFvg: $('#showFvg'), showOb: $('#showOb'), showMarkers: $('#showMarkers'),
   chartTitle: $('#chartTitle'), chartSubtitle: $('#chartSubtitle'), lastTime: $('#lastCandleTime'),
   count: $('#chartCount'), range: $('#rangeReadout'), older: $('#olderBtn'), latest: $('#latestBtn'),
   zoomIn: $('#zoomInBtn'), zoomOut: $('#zoomOutBtn'), fitAll: $('#fitAllBtn'),
   readout: $('#ohlcvReadout'), toast: $('#toast')
 };
 let catalog = [], selectedMeta = null, candles = [], currentAnalysis = null, annualPeaks = [];
-let chartStart = 0, chartSize = 0, loadToken = 0, toastTimer;
+let chartController = null, loadToken = 0, toastTimer;
 
 function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character]);
@@ -46,7 +47,7 @@ function setView(name) {
   const view = known.includes(name) ? name : 'overview';
   document.querySelectorAll('.nav-item').forEach(button => button.classList.toggle('active', button.dataset.view === view));
   document.querySelectorAll('.view-panel').forEach(panel => panel.classList.toggle('active', panel.id === `view-${view}`));
-  if (view === 'chart') requestAnimationFrame(drawVisibleChart);
+  if (view === 'chart') requestAnimationFrame(() => { chartController?.resize(); drawVisibleChart(); });
   if (view === 'structure') renderStructure();
   if (view === 'volume') renderAnnual();
 }
@@ -79,13 +80,11 @@ function bindEvents() {
   els.zoomOut.addEventListener('click', () => zoomChart(-1));
   els.older.addEventListener('click', () => panChart(-1));
   els.latest.addEventListener('click', () => panChart(1));
-  els.canvas.addEventListener('pointermove', event => {
-    const rect = els.canvas.getBoundingClientRect();
-    setHover({ x: event.clientX - rect.left, y: event.clientY - rect.top });
-    drawVisibleChart();
-  });
-  els.canvas.addEventListener('pointerleave', () => { setHover(null); drawVisibleChart(); });
-  window.addEventListener('resize', drawVisibleChart);
+  els.chartType.addEventListener('change', () => chartController?.setChartType(els.chartType.value));
+  for (const [element, layer] of [[els.showEma20, 'ema20'], [els.showEma50, 'ema50'], [els.showFvg, 'fvg'], [els.showOb, 'ob'], [els.showMarkers, 'markers']]) {
+    element.addEventListener('change', () => chartController?.setLayer(layer, element.checked));
+  }
+  window.addEventListener('resize', () => { chartController?.resize(); drawVisibleChart(); });
   window.addEventListener('keydown', event => {
     if (!$('#view-chart').classList.contains('active') || /INPUT|SELECT|TEXTAREA/.test(document.activeElement?.tagName || '')) return;
     if (event.key === '+' || event.key === '=') { event.preventDefault(); zoomChart(1); }
@@ -141,8 +140,7 @@ async function loadSelectedDataset() {
     candles = result.candles;
     currentAnalysis = analyze(candles);
     annualPeaks = annualVolumePeaks(candles);
-    chartStart = 0;
-    chartSize = candles.length;
+    chartController?.setData(candles, currentAnalysis, annualPeaks);
     updateLoadedState(result.skippedRows);
     updateStats();
     renderCatalog();
@@ -185,7 +183,7 @@ function clearLoadedDataset() {
   candles = [];
   currentAnalysis = null;
   annualPeaks = [];
-  chartStart = chartSize = 0;
+  chartController?.setData([], null, []);
   els.source.textContent = 'لا توجد ملفات مسجلة';
   els.status.classList.remove('ready');
   els.status.innerHTML = '<span class="status-icon">◌</span><span>لا توجد بيانات مسجلة</span>';
@@ -279,66 +277,51 @@ function renderCatalog() {
 }
 
 function drawVisibleChart() {
-  if (!els.canvas || !currentAnalysis || !candles.length) {
-    if (els.canvas) {
-      const context = els.canvas.getContext('2d');
-      context.clearRect(0, 0, els.canvas.width, els.canvas.height);
-      els.empty.classList.add('visible');
-      updateChartControls();
-    }
+  if (!chartController) return;
+  if (!selectedMeta || !candles.length) {
+    els.empty.classList.add('visible');
+    els.chartTitle.textContent = 'اختر سوقًا';
+    els.chartSubtitle.textContent = 'ستظهر الشموع عند تحميل CSV المسجل في data/catalog.json';
+    els.lastTime.textContent = '—';
+    els.count.textContent = '0 شمعة';
+    updateChartControls();
     return;
   }
-  const start = Math.max(0, Math.min(chartStart, candles.length - 1));
-  const end = Math.min(candles.length, start + chartSize);
-  const visibleCandles = candles.slice(start, end);
-  const visibleAnalysis = {
-    e20: currentAnalysis.e20.slice(start, end),
-    e50: currentAnalysis.e50.slice(start, end),
-    swings: currentAnalysis.swings.filter(item => item.index >= start && item.index < end).map(item => ({ ...item, index: item.index - start })),
-    zones: currentAnalysis.zones.filter(item => item.start < end).map(item => ({ ...item, start: Math.max(0, item.start - start) })),
-    annualPeaks: annualPeaks.filter(item => item.peakIndex >= start && item.peakIndex < end).map(item => ({ index: item.peakIndex - start, year: item.year }))
-  };
+
   els.empty.classList.remove('visible');
-  drawChart(els.canvas, visibleCandles, visibleAnalysis, (_text, candle) => {
-    els.readout.textContent = candle ? `${fmtDate(candle.time)} · O ${fmtNum(candle.open)} H ${fmtNum(candle.high)} L ${fmtNum(candle.low)} C ${fmtNum(candle.close)} V ${fmtVol(candle.volume)}` : 'حرّك المؤشر فوق شمعة لقراءة OHLCV';
-  });
+  const range = chartController.getVisibleRange();
+  const first = candles[range?.fromIndex ?? 0];
+  const last = candles[range?.toIndex ?? candles.length - 1];
   els.chartTitle.textContent = `${selectedMeta.symbol} · ${selectedMeta.timeframe}`;
-  els.chartSubtitle.textContent = `${fmtDate(visibleCandles[0].time)} — ${fmtDate(visibleCandles.at(-1).time)} · ${start === 0 && end === candles.length ? 'كامل السجل' : 'نطاق مكبّر'}`;
+  els.chartSubtitle.textContent = `${fmtDate(first.time)} — ${fmtDate(last.time)} · ${range?.full ? 'كامل السجل' : 'نطاق محدد'}`;
   els.lastTime.textContent = `${fmtDate(candles.at(-1).time, true)} UTC`;
-  els.count.textContent = `${visibleCandles.length.toLocaleString('en-US')} شمعة مرئية · ${candles.length.toLocaleString('en-US')} في الملف`;
+  els.count.textContent = `${(range?.visible ?? candles.length).toLocaleString('en-US')} شمعة ظاهرة · ${candles.length.toLocaleString('en-US')} في الملف`;
   updateChartControls();
 }
 function updateChartControls() {
-  const total = candles.length;
-  const end = Math.min(total, chartStart + chartSize);
-  els.range.textContent = total ? `${(chartStart + 1).toLocaleString('en-US')}–${end.toLocaleString('en-US')} / ${total.toLocaleString('en-US')}` : '—';
-  const disabled = total === 0;
+  const range = candles.length ? chartController?.getVisibleRange() : null;
+  const disabled = !range;
+  els.range.textContent = range ? `${range.from.toLocaleString('en-US')}–${range.to.toLocaleString('en-US')} / ${range.total.toLocaleString('en-US')}` : '—';
   [els.fitAll, els.zoomIn, els.zoomOut, els.older, els.latest].forEach(button => { button.disabled = disabled; });
-  els.zoomIn.disabled = disabled || chartSize <= 30;
-  els.zoomOut.disabled = disabled || chartSize >= total;
-  els.older.disabled = disabled || chartStart <= 0;
-  els.latest.disabled = disabled || chartStart + chartSize >= total;
+  if (!range) return;
+  els.zoomIn.disabled = range.visible <= 8;
+  els.zoomOut.disabled = range.visible >= range.total;
+  els.older.disabled = range.fromIndex <= 0;
+  els.latest.disabled = range.toIndex >= range.total - 1;
 }
 function fitAllCandles() {
   if (!candles.length) return;
-  chartStart = 0;
-  chartSize = candles.length;
-  setHover(null);
+  chartController.fitContent();
   drawVisibleChart();
 }
 function zoomChart(direction) {
   if (!candles.length) return;
-  const oldEnd = chartStart + chartSize;
-  const nextSize = direction > 0 ? Math.max(30, Math.floor(chartSize / 1.5)) : Math.min(candles.length, Math.ceil(chartSize * 1.5));
-  chartSize = nextSize;
-  chartStart = Math.max(0, Math.min(candles.length - chartSize, oldEnd - chartSize));
-  setHover(null);
+  chartController.zoom(direction);
   drawVisibleChart();
 }
 function panChart(direction) {
-  if (!candles.length || chartSize >= candles.length) return;
-  chartStart = Math.max(0, Math.min(candles.length - chartSize, chartStart + direction * Math.max(1, Math.floor(chartSize * 0.75))));
-  setHover(null);
+  if (!candles.length) return;
+  chartController.pan(direction);
   drawVisibleChart();
 }
 
@@ -347,6 +330,14 @@ async function init() {
   updateClock();
   setInterval(updateClock, 1000);
   bindEvents();
+  chartController = createTradingViewChart(els.chart, {
+    onCrosshairChange: candle => {
+      els.readout.textContent = candle
+        ? `${fmtDate(candle.time, true)} UTC · O ${fmtNum(candle.open)} H ${fmtNum(candle.high)} L ${fmtNum(candle.low)} C ${fmtNum(candle.close)} V ${fmtVol(candle.volume)}`
+        : 'حرّك المؤشر أو المس شمعة لقراءة OHLCV';
+    },
+    onVisibleRangeChange: () => drawVisibleChart()
+  });
   setView(selectedViewFromHash());
   try {
     const result = await loadCatalog();
