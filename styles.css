@@ -13,3 +13,16 @@
 @media(max-width:1050px){.chart-wrap.chart-wrap-full{height:min(66vh,720px)}}
 @media(max-width:760px){.source-chip{font-size:8px;padding:5px 7px;max-width:132px;overflow:hidden;text-overflow:ellipsis}.nav-item{min-width:0;flex:1;padding:6px 2px;font-size:8px}.chart-controls{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:9px}.chart-controls .selector-group{min-width:0}.chart-range-tools{grid-column:1/-1;margin:0;justify-content:center}.chart-pan-tools{grid-column:1/-1;justify-content:center}.chart-tool-button{flex:1}.range-readout{min-width:110px}.chart-wrap.chart-wrap-full{height:58vh;min-height:390px}.public-data-warning{display:block}.public-data-warning b{display:block;margin-bottom:4px}.data-files-layout{grid-template-columns:1fr}.path-tree,.code-sample{font-size:9px;padding:10px}.file-format-notes{grid-template-columns:1fr}.chart-hint{line-height:1.8}.chart-page-card .chart-legend{gap:7px}}
 @media(max-width:390px){.nav-item{min-width:0;font-size:7.5px}.chart-wrap.chart-wrap-full{height:54vh;min-height:350px}.source-chip{max-width:108px}.chart-tool-button{padding:6px 7px;font-size:9px}.range-readout{font-size:9px}}
+
+
+/* TradingView Lightweight Charts controls and responsive canvas host */
+.chart-wrap #priceChart{position:absolute;inset:0;width:100%;height:100%;direction:ltr;touch-action:pan-y}
+.chart-layer-tools{display:flex;align-items:center;gap:6px;flex-wrap:wrap;width:100%;padding-top:2px}
+.chart-layer-tools label{display:inline-flex;align-items:center;gap:5px;padding:4px 7px;border:1px solid #263441;border-radius:6px;background:#121c27;color:#a9b6c3;font:9px var(--mono);white-space:nowrap;cursor:pointer;user-select:none}
+.chart-layer-tools input{width:13px;height:13px;margin:0;accent-color:var(--green)}
+.chart-controls .selector-group select{min-height:34px}
+.chart-attribution{margin-top:6px;color:#718091;font:8px var(--mono);text-align:left;direction:ltr}
+.chart-attribution a{color:#91a8bc;text-decoration:none}
+.chart-attribution a:hover{text-decoration:underline}
+@media(max-width:760px){.chart-wrap-full{height:64vh;min-height:360px}.chart-layer-tools{gap:5px}.chart-layer-tools label{padding:5px 6px;font-size:8px}.chart-controls .selector-group{min-width:calc(50% - 6px)}.chart-range-tools{margin-right:0}.chart-attribution{text-align:center}}
+@media(max-width:390px){.chart-wrap-full{height:60vh;min-height:320px}.chart-layer-tools label{font-size:7px;padding:4px 5px}}
